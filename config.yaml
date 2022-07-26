@@ -1,0 +1,9 @@
+project:
+  id: "open-targets-genetics-dev"
+files:
+  # Peaks file normalized
+  peaks: gs://genetics-portal-dev-analysis/ba13/OTAR034_CHEERS_epimap_Jul22/Full_epimap_adjusted.txt
+  #SNPs file
+  snp: gs://genetics-portal-dev-analysis/ba13/OTAR034_CHEERS_epimap_Jul22/example_GCST004131
+  # Outputs
+  output: gs://genetics-portal-dev-analysis/ba13/
