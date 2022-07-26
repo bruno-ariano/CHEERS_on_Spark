@@ -1,4 +1,4 @@
-# Set parameters.
+# Set parameters
 export PROJECT=open-targets-genetics-dev
 export CLUSTER_NAME=CHEERS_on_SPARK
 export CLUSTER_REGION=europe-west1
