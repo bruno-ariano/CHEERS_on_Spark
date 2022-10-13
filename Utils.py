@@ -1,10 +1,10 @@
 from pyspark.sql.types import *
 import pyspark.sql.functions as F
+import pyspark.sql
 from typing import Iterable
 import scipy.special as sps
-import argparse
 
-def load_snps(in_path):
+def load_snps(spark, in_path):
     ''' Loads snp list for enrichment
     Params:
         in_path (file)
@@ -19,12 +19,11 @@ def load_snps(in_path):
         StructField("pos", IntegerType(), False)
     ])
     snps = (
-        spark.read.format('parquet').load(in_path, schema=import_schema)
+        spark.read.format('parquet').load(in_path)
     )
-    snps.show()
     return snps
 
-def load_peaks(in_path):
+def load_peaks(spark, in_path):
     ''' Loads peak coords and scores to wide df
     Params:
         in_path (file)
@@ -59,16 +58,7 @@ def melt(df: pyspark.sql.DataFrame,
             F.col("_vars_and_vals")[x].alias(x) for x in [var_name, value_name]]
     return _tmp.select(*cols)
 
-def parse_args():
-    """ Load command line args """
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--in_peaks', metavar="<str>", help="Input peaks", type=str, required=True)
-    parser.add_argument('--in_snps', metavar="<str>", help="Input SNPs", type=str, required=True)
-    parser.add_argument('--out_stats', metavar="<str>", help="Output statistics", type=str, required=True)
-    parser.add_argument('--out_unique_peaks', metavar="<str>", help="Output peaks that have >=1 overlapping SNP", type=str, required=False)
-    parser.add_argument('--out_snp_peak_overlaps', metavar="<str>", help="Output SNPs and their overlapping peaks", type=str, required=False)
-    args = parser.parse_args()
-    return args
+
 
 def ndtr(x, mean, std):
     return .5 + .5*sps.erf((x - mean)/(std * 2**.5))
