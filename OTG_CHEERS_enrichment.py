@@ -31,8 +31,6 @@ def main(cfg):
 
     start_time = time.time()
 
-    # Parse args
-    args = parse_args()
 
     # Make spark session
     global spark
@@ -54,8 +52,8 @@ def main(cfg):
     #
 
 
-    peaks_wide = load_peaks(cfg.files.peaks).persist()
-    snps = load_snps(cfg.files.snps)
+    peaks_wide = load_peaks(spark, cfg.files.peaks).persist()
+    snps = load_snps(spark, cfg.files.snp)
     
     #
     # Melt the peaks dataset --------------------------------------------------
@@ -79,11 +77,11 @@ def main(cfg):
 
     peaks_overlapping = (
         # Only need the peak coords
-        snps
+        peaks_wide
         .select('chr', 'start', 'end')
         # Do a inner join
         .join(
-            F.broadcast(peaks_wide),
+            snps,
             ((F.col('chrom') == F.col('chr')) &
              (F.col('pos') >= F.col('start')) &
              (F.col('pos') <= F.col('end'))
@@ -106,7 +104,6 @@ def main(cfg):
     # Get peaks that overlap
     unique_peaks = (peaks_overlapping
                     .join(peak_ranks, on = ['chr', 'start', 'end'], how = 'inner')
-                    .withColumn('count_peaks', F.col('count_peaks').cast(FloatType()))
                     )
    
 
@@ -154,33 +151,32 @@ def main(cfg):
         sample_mean_rank_unique_peaks
         .select('study_id', 'sample', 'mean_rank', 'pvalue')
         .write.csv(
-            args.out_stats,
+            cfg.files.out_stats,
             sep='\t'
         )
     )
 
     # Write a table of unique peaks
-    if args.out_unique_peaks:
+    if cfg.files.out_unique_peaks:
         (
             unique_peaks
             .write
             .csv(
-                args.out_unique_peaks,
-                sep='\t',
-                index=None
+                cfg.files.out_unique_peaks,
+                sep='\t'
             )
         )
 
     # Write a table SNPs and their overlapping peaks
-    if args.out_snp_peak_overlaps:
+    if cfg.files.out_snp_peak_overlaps:
         
         # Write
         (
             peaks_overlapping
             .write
             .csv(
-                args.out_snp_peak_overlaps,
-                sep='\t',
+                cfg.files.out_snp_peak_overlaps,
+                sep='\t'
             )
         )
 
